@@ -1,33 +1,42 @@
 package tools
 
 import (
+	"database/sql"
+	"fmt"
+
+	_ "github.com/lib/pq"
+
 	log "github.com/sirupsen/logrus"
 )
 
-type LoginDetails struct {
-	Username string
-	Token string
+type PostgresDb struct {
+	db *sql.DB
 }
 
-type CoinDetails struct {
-	Coins int64
-	Username string
-}
+func NewDatabase() (*PostgresDb, error) {
+	fmt.Println("Opening DB connection...")
+	connectionString := "postgres://postgres:admin@localhost:5400/dev?sslmode=disable"
 
-type DatabaseInterface interface {
-	GetLoginDetails(username string) *LoginDetails
-	GetUserCoins(username string) *CoinDetails
-	SetupDatabase() error
-}
-
-func NewDatabase() (*DatabaseInterface, error) {
-	var database DatabaseInterface = &mockDB{}
-
-	var err error = database.SetupDatabase()
+	postgresDb, err := sql.Open("postgres", connectionString)
 	if err != nil {
-		log.Error(err)
-		return nil, err
+		log.Fatal(err)
 	}
-	
-	return &database, nil
- } 
+
+	if err = postgresDb.Ping(); err != nil {
+		log.Fatal(err)
+	}
+
+	return &PostgresDb{db: postgresDb}, nil
+}
+
+func (d *PostgresDb) CloseDatabase() error {
+	if d.db != nil {
+		err := d.db.Close()
+		if err != nil {
+			log.Printf("Error closing database connection: %v", err)
+			return err
+		}
+		fmt.Println("Database connection closed successfully.")
+	}
+	return nil
+}

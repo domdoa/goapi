@@ -1,5 +1,0 @@
-GET http://localhost:8000/account/coins?username=dom
-Authorization: 123
-
-### Unauthorized
-GET http://localhost:8000/account/coins?username=dom
